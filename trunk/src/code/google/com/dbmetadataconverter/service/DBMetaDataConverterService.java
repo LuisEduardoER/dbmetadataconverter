@@ -34,26 +34,17 @@ import code.google.com.dbmetadataconverter.model.Table;
 public class DBMetaDataConverterService {
 
 	private static final int COLUMN_NAME = 4;
-	private static final int TYPE_NAME = 6;
-	public static final String MY_SQL = "MySQL";
-	public static final String ORACLE = "Oracle";
-	public static final String MS_SQL_SERVER= "MS SQLServer";
-	
+	private static final int TYPE_NAME = 6;	
 	private Connection conn;
 	private DatabaseMetaData meta;	
 	
 	
-	public DBMetaDataConverterService(String username, String password, String host, 
-			String rdbms, String dbName) throws SQLException {
-		
-		String url = DBMetaDataConverterService.getUrl(rdbms, host, dbName);
-		String driverClassName = DBMetaDataConverterService.getDriverName(rdbms);
+	public DBMetaDataConverterService(String username, String password, String url, String driver) throws SQLException {
 		try {
-			Class.forName(driverClassName);
+			Class.forName(driver);
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
-		url = DBMetaDataConverterService.getUrl(rdbms, host, dbName);
 		conn = DriverManager.getConnection(url, username, password);		
 		meta = conn.getMetaData();		
 	}
@@ -70,6 +61,11 @@ public class DBMetaDataConverterService {
 		this.meta = meta;
 	}
 	
+	/**
+	 * Returns all tables from the metadata.
+	 * @return
+	 * @throws SQLException
+	 */
 	public List<Table> getAllTables() throws SQLException {
 		ResultSet rs = meta.getTables(null, null, null, null);
 	    List<Table> tables = new ArrayList<Table>();
@@ -81,6 +77,14 @@ public class DBMetaDataConverterService {
 		return getTables(tables);
 	}
 	
+	/**
+	 * This is the main method. It converts the DatabaseMetaData interface.
+	 * Returns only the tables that are passed. Each table inside the parameter list 
+	 * must have the name property filled.
+	 * @param tables
+	 * @return
+	 * @throws SQLException
+	 */
 	public List<Table> getTables(List<Table> tables) throws SQLException {		
 		for (Table table : tables) {
 			table.setNameForClass(convert(table.getName(), true));
@@ -182,31 +186,14 @@ public class DBMetaDataConverterService {
 		}
 		return tables;
 	}
-	
-	public static String getDriverName(String rdbms) {
-		String driverName = "";
-		if (rdbms.equals(MY_SQL)) {
-			driverName = "com.mysql.jdbc.Driver";
-		} else if (rdbms.equals(ORACLE)) {
-			driverName = "oracle.jdbc.driver.OracleDriver";
-		} else if (rdbms.equals(MS_SQL_SERVER)) {
-			driverName = "com.microsoft.jdbc.sqlserver.SQLServerDriver";
-		}
-		return driverName;
-	}
-	
-	public static String getUrl(String rdbms, String host, String dbName) {
-		String url = "";
-		if (rdbms.equalsIgnoreCase(MY_SQL)) {			
-			url = "jdbc:mysql://" + host + ":3306/" + dbName;			
-		} else if (rdbms.equals(ORACLE)) {
-			url = "jdbc:oracle:thin:@" + host + ":1521:" + dbName;
-		} else if (rdbms.equals(MS_SQL_SERVER)) {
-			url = "jdbc:microsoft:sqlserver://"+host+":1433;DatabaseName="+dbName;
-		}
-		return url;
-	}
-	
+		
+	/**
+	 * Converts the string to a java code conventions definition. Ex test_table becomes
+	 * testTable or TestTable (depending on the isFirstUpper parameter).
+	 * @param str
+	 * @param isFirstUpper
+	 * @return
+	 */
 	public static String convert(String str, boolean isFirstUpper) {
 		String[] strV = str.split("_");
 		StringBuilder sb = new StringBuilder();
@@ -257,10 +244,17 @@ public class DBMetaDataConverterService {
 			return Short.class;
 		} else if (sqlType.equalsIgnoreCase("NUMERIC") || sqlType.equalsIgnoreCase("DECIMAL")) {
 			return Double.class;
-		}			
+		} else if (sqlType.toLowerCase().contains("text")) {
+			return String.class;
+		}
 		return Object.class;
 	}
 	
+	/**
+	 * This method receive the java.sql.Types (int) and return tha String name of it.
+	 * @param i
+	 * @return
+	 */
 	public static String getSqlTypes(int i) {
 		switch (i) {
 		case Types.INTEGER: return "Types.INTEGER";

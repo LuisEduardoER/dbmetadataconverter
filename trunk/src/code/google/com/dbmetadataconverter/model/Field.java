@@ -30,6 +30,7 @@ public class Field implements Comparable<Field>{
 	private Table fkTable;
 	private String comments;
 	private Integer ordinalPosition;
+	private String defaultValue;
 	
 	public Field() {
 		
@@ -229,4 +230,15 @@ public class Field implements Comparable<Field>{
 		this.ordinalPosition = ordinalPosition;
 	}
 	
+	/**
+	 * Gets the default column value for this column.
+	 * @return
+	 */
+	public String getDefaultValue() {
+		return defaultValue;
+	}
+
+	public void setDefaultValue(String defaultValue) {
+		this.defaultValue = defaultValue;
+	}
 }

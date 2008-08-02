@@ -105,6 +105,7 @@ public class DBMetaDataConverterService {
 				field.setNotNull(rsCols.getString(18).trim().equals("NO"));
 				field.setComments(rsCols.getString(12));
 				field.setOrdinalPosition(rsCols.getInt(17));
+				field.setDefaultValue(rsCols.getString(13));
 				fields.add(field);				
 			}
 			Collections.sort(fields);
